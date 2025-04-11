@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kreis-Quiz</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            z-index: -3;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 70%;
+            left: 5%;
+            width: 250px;
+            height: 250px;
+            background-image: url('https://th.bing.com/th/id/OIP.dQf_MFzXG7na4AStQ9R-cAHaFY?rs=1&pid=ImgDetMain');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: -2;
+            opacity: 0.7;
+            transform: translateY(-50%);
+        }
+
+        .right-bg {
+            position: fixed;
+            top: 70%;
+            right: 5%;
+            width: 250px;
+            height: 250px;
+            background-image: url('https://www.jungerkulturkanal.de/media/_processed_/d/7/csm_Mathemann_e1cc9083a1.jpg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: -2;
+            opacity: 0.7;
+            transform: translateY(-50%);
+        }
+        
+        .overlay {
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 2px solid #3498db;
+            margin: 0 auto;
+            max-width: 600px;
+            position: relative;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-container {
+            margin-top: 20px;
+        }
+        
+        .question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        button {
+            margin: 8px;
+            padding: 12px 20px;
+            width: 90%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .result {
+            font-weight: bold;
+            margin: 20px 0;
+            font-size: 1.2em;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .correct {
+            color: #27ae60;
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+        
+        .wrong {
+            color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .stopwatch {
+            font-size: 2em;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .time-warning {
+            color: #f39c12;
+            animation: pulse 1s infinite;
+        }
+        
+        .time-critical {
+            color: #e74c3c;
+            animation: pulse 0.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .progress {
+            margin: 15px 0;
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        #end-message {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .success {
+            color: #27ae60;
+        }
+        
+        .failure {
+            color: #e74c3c;
+        }
+        
+        .points-display {
+            font-size: 1.5em;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #2c3e50;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .restart-btn {
+            margin-top: 20px;
+            background-color: #2ecc71;
+        }
+        
+        .restart-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="right-bg"></div>
+    <div class="overlay">
+        <h1>Das Mathemann-Quiz</h1>
+        <h1>- Kreise und Prismen -</h1>
+        <p>7 Fragen zu Eigenschaften und Formeln von Kreisen sowie Prismen</p>
+        <p>Du hast 20 Sekunden pro Frage - für jede verbleibende Sekunde gibt es mehr Punkte!</p>
+        
+        <div class="quiz-container">
+            <div id="question-container" class="hidden">
+                <div class="points-display" id="points-display">Punkte: 0</div>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="stopwatch" id="stopwatch">20</div>
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+                <div class="result" id="result"></div>
+            </div>
+            
+            <div id="start-container">
+                <button id="start-btn">Quiz starten</button>
+            </div>
+            
+            <div id="end-container" class="hidden">
+                <h2 id="end-message"></h2>
+                <div id="detailed-results"></div>
+                <button class="restart-btn" id="restart-btn">Quiz neu starten</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Wie wird der Abstand vom Mittelpunkt des Kreises zur Kreislinie genannt?",
+                options: ["Durchmesser", "Radius", "Sehne", "Tangente"],
+                correctAnswer: 1,
+                maxPoints: 100
+            },
+            {
+                question: "Wie berechnet man den Umfang eines Kreises? u = ...",
+                options: ["π × r²", "2 × π × r", "π × d²", "1/2 × π × r"],
+                correctAnswer: 1,
+                maxPoints: 200
+            },
+            {
+                question: "Welches Prisma besitzt einen Kreis als Grund- bzw. Deckfläche?",
+                options: ["Kegel", "Quader", "Zylinder", "Tetraeder"],
+                correctAnswer: 2,
+                maxPoints: 100
+            },
+            {
+                question: "Wie lautet die Flächenformel des Kreises? A = ...",
+                options: ["2 × π × r", "4 × π × r²", "π × d", "π × r²"],
+                correctAnswer: 3,
+                maxPoints: 200
+            },
+            {
+                question: "Wenn der Durchmesser eines Kreises 12,7 cm beträgt, wie groß ist dessen Radius?",
+                options: ["6,35 cm", "5,40 cm", "6,25 cm", "7,45 cm"],
+                correctAnswer: 0,
+                maxPoints: 200
+            },
+            {
+                question: "Welche dieser Aussagen ist falsch?",
+                options: [
+                    "Alle Punkte auf der Kreislinie haben den gleichen Abstand zum Mittelpunkt.",
+                    "Das Volumen eines Prismas entspricht dem Produkt aus Grundfläche und Höhe.",
+                    "Der Oberflächeninhalt eines Prismas setzt sich aus der Grundfläche und der doppelten Mantelfläche zusammen.",
+                    "π ist das Verhältnis von Umfang zu Durchmesser."
+                ],
+                correctAnswer: 2,
+                maxPoints: 300
+            },
+            {
+                question: "Ein Kreis mit Radius 7 cm hat einen Umfang von etwa ...",
+                options: ["22 cm", "44 cm", "66 cm", "88 cm"],
+                correctAnswer: 1,
+                maxPoints: 500
+            }
+        ];
+
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const startContainer = document.getElementById('start-container');
+        const questionContainer = document.getElementById('question-container');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const resultElement = document.getElementById('result');
+        const endContainer = document.getElementById('end-container');
+        const endMessage = document.getElementById('end-message');
+        const detailedResults = document.getElementById('detailed-results');
+        const stopwatchElement = document.getElementById('stopwatch');
+        const progressBar = document.getElementById('progress-bar');
+        const pointsDisplay = document.getElementById('points-display');
+
+        let currentQuestionIndex = 0;
+        let totalPoints = 0;
+        let timer;
+        let timeLeft;
+        let questionResults = [];
+
+        startBtn.addEventListener('click', startQuiz);
+        restartBtn.addEventListener('click', startQuiz);
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            totalPoints = 0;
+            questionResults = [];
+            pointsDisplay.textContent = "Punkte: 0";
+            startContainer.classList.add('hidden');
+            endContainer.classList.add('hidden');
+            questionContainer.classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            questionElement.textContent = `Frage ${currentQuestionIndex + 1}: ${question.question}`;
+            
+            const progress = (currentQuestionIndex / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            optionsElement.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.addEventListener('click', () => selectAnswer(index));
+                optionsElement.appendChild(button);
+            });
+            
+            resultElement.textContent = '';
+            resultElement.className = 'result';
+            
+            timeLeft = 20;
+            updateStopwatch();
+            timer = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            updateStopwatch();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                resultElement.textContent = "Zeit abgelaufen!";
+                resultElement.classList.add('wrong');
+                
+                const question = questions[currentQuestionIndex];
+                const pointsEarned = 0;
+                questionResults.push({
+                    question: question.question,
+                    correct: false,
+                    points: pointsEarned,
+                    maxPoints: question.maxPoints,
+                    timeUp: true
+                });
+                
+                setTimeout(() => nextQuestion(), 1500);
+            }
+        }
+
+        function updateStopwatch() {
+            stopwatchElement.textContent = timeLeft;
+            stopwatchElement.className = 'stopwatch';
+            
+            if (timeLeft <= 5) {
+                stopwatchElement.classList.add('time-critical');
+            } else if (timeLeft <= 10) {
+                stopwatchElement.classList.add('time-warning');
+            }
+        }
+
+        function selectAnswer(answerIndex) {
+            clearInterval(timer);
+            
+            const question = questions[currentQuestionIndex];
+            const buttons = optionsElement.querySelectorAll('button');
+            
+            buttons.forEach(button => {
+                button.disabled = true;
+            });
+            
+            // Berechne Punkte basierend auf verbleibender Zeit
+            const pointsEarned = Math.round((timeLeft / 20) * question.maxPoints);
+            
+            if (answerIndex === question.correctAnswer) {
+                resultElement.textContent = `Richtig! +${pointsEarned} Punkte`;
+                resultElement.classList.add('correct');
+                totalPoints += pointsEarned;
+                pointsDisplay.textContent = `Punkte: ${totalPoints}`;
+                
+                questionResults.push({
+                    question: question.question,
+                    correct: true,
+                    points: pointsEarned,
+                    maxPoints: question.maxPoints,
+                    timeUp: false
+                });
+            } else {
+                resultElement.textContent = `Falsch! Die richtige Antwort ist: ${question.options[question.correctAnswer]}`;
+                resultElement.classList.add('wrong');
+                
+                questionResults.push({
+                    question: question.question,
+                    correct: false,
+                    points: 0,
+                    maxPoints: question.maxPoints,
+                    timeUp: false
+                });
+            }
+            
+            setTimeout(() => nextQuestion(), 1500);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            questionContainer.classList.add('hidden');
+            endContainer.classList.remove('hidden');
+            
+            // Gesamtpunktzahl berechnen
+            const maxPossiblePoints = questions.reduce((sum, q) => sum + q.maxPoints, 0);
+            const percentage = Math.round((totalPoints / maxPossiblePoints) * 100);
+            
+            endMessage.textContent = `Quiz beendet! Du hast ${totalPoints} von ${maxPossiblePoints} möglichen Punkten erreicht (${percentage}%).`;
+            
+            if (percentage >= 70) {
+                endMessage.classList.add('success');
+                endMessage.textContent += " 🎉 Hervorragende Leistung! 🎉";
+            } else if (percentage >= 45) {
+                endMessage.classList.add('success');
+                endMessage.textContent += " 👍 Gute Leistung! 👍";
+            } else if (percentage >= 25) {
+                endMessage.classList.add('success');
+                endMessage.textContent += " 🤝 Akzeptable Leistung! 🤝";
+            } else {
+                endMessage.classList.add('failure');
+                endMessage.textContent += " 😟 Schade! Da geht noch mehr! 😟";
+            }
+            
+            // Detaillierte Ergebnisse anzeigen
+            detailedResults.innerHTML = "<h3>Detaillierte Ergebnisse:</h3>";
+            questionResults.forEach((result, index) => {
+                const resultDiv = document.createElement('div');
+                resultDiv.style.margin = "10px 0";
+                resultDiv.style.padding = "10px";
+                resultDiv.style.borderRadius = "5px";
+                resultDiv.style.backgroundColor = result.correct ? "rgba(39, 174, 96, 0.1)" : "rgba(231, 76, 60, 0.1)";
+                
+                let resultText = `<strong>Frage ${index + 1}:</strong> ${result.question}<br>`;
+                if (result.correct) {
+                    resultText += `✅ Richtig: ${result.points}/${result.maxPoints} Punkte`;
+                } else if (result.timeUp) {
+                    resultText += "⏰ Zeit abgelaufen: 0 Punkte";
+                } else {
+                    resultText += "❌ Falsch: 0 Punkte";
+                }
+                
+                resultDiv.innerHTML = resultText;
+                detailedResults.appendChild(resultDiv);
+            });
+        }
+    </script>
+</body>
+</html>
